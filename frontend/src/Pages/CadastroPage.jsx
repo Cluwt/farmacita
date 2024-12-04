@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { Alert } from "@mui/material";
-import CheckIcon from '@mui/icons-material/Check'; // Ícone de confirmação
+import { motion, AnimatePresence } from "framer-motion";
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Typography, Box, Button, TextField, AppBar, Toolbar, Alert } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import Cookies from "js-cookie"; // Caso precise para autenticação futura
 
 const Cadastro = () => {
-  const [view, setView] = useState(""); // "cliente", "atendente" ou vazio
+  const [formType, setFormType] = useState(null); // "cliente" ou "atendente"
   const [formData, setFormData] = useState({
     nome: "",
     cnpj: "",
@@ -14,389 +15,361 @@ const Cadastro = () => {
     email: "",
     senha: "",
   });
-  const [cnpjValid, setCnpjValid] = useState(null); // Estado para validação de CNPJ
-  const [alertMessage, setAlertMessage] = useState(""); // Estado para mensagem do alerta
-  const navigate = useNavigate(); // Inicializando o hook useNavigate
+  const [cnpjValid, setCnpjValid] = useState(null);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  // Animação dos containers
-  const containerVariant = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
-    exit: { opacity: 0, scale: 0.9, transition: { duration: 0.5 } },
-  };
-
-  const handleBack = () => {
-    setView(""); // Voltar à tela inicial
-    setFormData({ nome: "", cnpj: "", cpf: "", email: "", senha: "" });
-    setCnpjValid(null); // Resetar o estado de validação do CNPJ
-    setAlertMessage(""); // Limpar a mensagem do alerta
-  };
-
+  // Função para lidar com mudanças nos campos do formulário
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
-    // Validação de CNPJ no campo de CNPJ (somente para atendentes)
+    // Validação de CNPJ quando o campo tiver 14 caracteres
     if (name === "cnpj" && value.length === 14) {
       axios.get(`https://api.cnpja.com/office/${value}`, {
-        headers: { Authorization: '507f5121-2175-4925-8b5b-5f4ff17b3312-3165bba4-7fe0-461b-8092-5b90c99c4088' }
+        headers: { Authorization: '507f5121-2175-4925-8b5b-5f4ff17b3312-3165bba4-7fe0-461b-8092-5b90c99c4088' } // Substitua pelo seu token válido
       })
-        .then((response) => {
-          setCnpjValid(true); // CNPJ válido
+        .then(() => {
+          setCnpjValid(true);
           setAlertMessage("CNPJ válido!");
         })
-        .catch((error) => {
-          setCnpjValid(false); // CNPJ inválido
+        .catch(() => {
+          setCnpjValid(false);
           setAlertMessage("CNPJ inválido!");
         });
     }
   };
 
-  const handleSubmit = async (type) => {
-    let formDataToSend = { ...formData };
-
-    // Remover CPF se for atendente, e remover CNPJ se for cliente
-    if (type === "Atendente") {
-      delete formDataToSend.cpf; // Não envia CPF para atendente
-    } else if (type === "Cliente") {
-      delete formDataToSend.cnpj; // Não envia CNPJ para cliente
+  // Função para lidar com o envio do formulário
+  const handleSubmit = async () => {
+    // Verificação de campos obrigatórios
+    if (!formData.nome || !formData.email || !formData.senha ||
+        (formType === "cliente" && !formData.cpf) ||
+        (formType === "atendente" && !formData.cnpj)) {
+      setError("Por favor, preencha todos os campos obrigatórios.");
+      return;
     }
 
-    const url =
-      type === "Atendente"
-        ? "http://127.0.0.1:8000/api/atendentes/cadastrar/"
-        : "http://127.0.0.1:8000/api/clientes/cadastrar/";
+    // Verificação de CNPJ válido para atendentes
+    if (formType === "atendente" && !cnpjValid) {
+      setError("Por favor, insira um CNPJ válido.");
+      return;
+    }
 
-    console.log("FormData:", formDataToSend); // Log para verificar os dados enviados
+    const url = formType === "atendente"
+      ? "http://127.0.0.1:8000/api/atendentes/cadastrar/"
+      : "http://127.0.0.1:8000/api/clientes/cadastrar/";
+
+    const dataToSend = formType === "atendente"
+      ? { nome: formData.nome, cnpj: formData.cnpj, email: formData.email, senha: formData.senha }
+      : { nome: formData.nome, cpf: formData.cpf, email: formData.email, senha: formData.senha };
 
     try {
-      const response = await axios.post(url, formDataToSend);
-      alert(`${type} registrado com sucesso!`);
-      console.log("Response:", response.data);
-      handleBack(); // Resetar o formulário
+      const response = await axios.post(url, dataToSend);
+      alert("Cadastro realizado com sucesso!");
       navigate("/login");
-    } catch (error) {
-      console.error("Erro ao enviar:", error.response?.data || error.message);
-      alert("Erro ao registrar. Verifique os dados e tente novamente.");
+    } catch (err) {
+      console.error("Erro ao cadastrar:", err);
+      setError("Erro ao cadastrar. Verifique os dados e tente novamente.");
     }
   };
 
   return (
-    <div style={styles.container}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#fff', fontFamily: "Arial, sans-serif" }}>
+      
       {/* Navbar */}
-      <header style={styles.navbar}>
-        <div style={styles.logo}>
-          <h1 style={styles.logoText}>Farmacinha</h1>
-        </div>
-        <nav>
-          <ul style={styles.navLinks}>
-            <li>
-              <a href="/" style={styles.navLink}>Início</a>
-            </li>
-            <li>
-              <a href="/cadastro" style={styles.navLink}>Cadastre-se</a>
-            </li>
-            <li>
-              <a href="/login" style={styles.navLink}>Entrar</a>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <AppBar position="fixed" sx={{ backgroundColor: "#fff", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)", zIndex: 1000 }}>
+        <Toolbar sx={{ display: "flex", alignItems: "center", padding: "0 20px" }}>
+          {/* Container Flex para Alinhar Título e Links */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: "30px" }}>
+            <Typography variant="h6" sx={{ color: "#333", fontWeight: "bold", whiteSpace: 'pre-line' }}>
+              Saúde & Bem-Estar
+            </Typography>
+            {/* Links da Navbar */}
+            <Box sx={{ display: "flex", gap: "20px", alignItems: "center" }}>
+              <RouterLink 
+                to="/duvidas" 
+                style={{ 
+                  textDecoration: "none", 
+                  color: "#333", 
+                  fontSize: "16px", 
+                  textUnderlineOffset: "5px", 
+                  transition: "all 0.3s ease" 
+                }}
+              >
+                Dúvidas
+              </RouterLink>
+              <RouterLink 
+                to="/legislacao" 
+                style={{ 
+                  textDecoration: "none", 
+                  color: "#333", 
+                  fontSize: "16px", 
+                  textUnderlineOffset: "5px", 
+                  transition: "all 0.3s ease" 
+                }}
+              >
+                Legislação
+              </RouterLink>
+            </Box>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-      {/* Conteúdo */}
-      <div style={styles.content}>
+      {/* Conteúdo Principal */}
+      <Box sx={{ flexGrow: 1, paddingTop: "80px", paddingBottom: "40px", display: "flex", flexDirection: "column", alignItems: "center", maxWidth: "1200px", margin: "0 auto" }}>
+        {/* Header */}
+        <Box sx={{ textAlign: "center", marginBottom: "50px", marginTop:"0px" }}>
+          <Typography variant="h1" sx={{ fontSize: "36px", fontWeight: "bold", color: "#000" }}>
+            Farmacinha
+          </Typography>
+          <Typography variant="h2" sx={{ fontSize: "22px", color: "#d81b1b", textDecoration: "underline", whiteSpace: 'pre-line' }}>
+            Saúde & Bem-Estar
+          </Typography>
+        </Box>
+
+        {/* Escolha de Tipo de Cadastro */}
         <AnimatePresence>
-          {/* Título e Subtítulo */}
-          <div style={styles.titleContainer}>
-            <h1 style={styles.mainTitle}>Farmacinha</h1>
-            <h2 style={styles.subtitle}>Formulário de Cadastro</h2>
-          </div>
-
-          {/* Tela de Escolha */}
-          {view === "" && (
+          {!formType ? (
             <motion.div
-              style={styles.choiceContainer}
-              variants={containerVariant}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "30px" }}
+              initial={{ y: 250, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 250, opacity: 0 }}
+              transition={{ duration: 0.5 }}
             >
-              <h1 style={styles.title}>Você quer se registrar como?</h1>
-              <div style={styles.options}>
+              <Typography variant="h4" sx={{ fontSize: "32px", color: "#333", fontWeight: "bold" }}>
+                Você quer se registrar como?
+              </Typography>
+              <Box sx={{ display: "flex", gap: "40px" }}>
                 <motion.div
-                  style={styles.optionBox}
+                  style={{ backgroundColor: "#4CAF50", color: "#fff", padding: "30px 60px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)", textAlign: "center" }}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setView("atendente")}
+                  onClick={() => setFormType("atendente")}
                 >
                   Atendente
                 </motion.div>
                 <motion.div
-                  style={styles.optionBox}
+                  style={{ backgroundColor: "#4CAF50", color: "#fff", padding: "30px 60px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)", textAlign: "center" }}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setView("cliente")}
+                  onClick={() => setFormType("cliente")}
                 >
                   Cliente
                 </motion.div>
-              </div>
+              </Box>
             </motion.div>
-          )}
-
-          {/* Formulário de Atendente */}
-          {view === "atendente" && (
+          ) : (
             <motion.div
-              style={styles.formContainer}
-              variants={containerVariant}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
+              style={{
+                backgroundColor: "#f2f2f2",
+                padding: "40px",
+                borderRadius: "10px",
+                boxShadow: "0 4px 19px rgba(0, 0, 0, 0.1)",
+                width: "100%",
+                maxWidth: "450px",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                gap: "20px",
+              }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.5 }}
             >
-              <h2 style={styles.formTitle}>Registro de Atendente</h2>
-              <input
-                type="text"
-                placeholder="Nome Completo"
+              <Typography variant="h5" sx={{ fontSize: "26px", fontWeight: "bold" }}>
+                Cadastro como {formType === "cliente" ? "Cliente" : "Atendente"}
+              </Typography>
+              {error && <Alert severity="error">{error}</Alert>}
+              <TextField
+                label="Nome Completo"
                 name="nome"
                 value={formData.nome}
                 onChange={handleChange}
-                style={styles.input}
+                variant="outlined"
+                fullWidth
               />
-              <input
-                type="text"
-                placeholder="CNPJ"
-                name="cnpj"
-                value={formData.cnpj}
-                onChange={handleChange}
-                style={styles.input}
-              />
-              {alertMessage && (
-                <Alert icon={<CheckIcon fontSize="inherit" />} severity={cnpjValid ? "success" : "error"}>
-                  {alertMessage}
-                </Alert>
+              {formType === "atendente" && (
+                <>
+                  <TextField
+                    label="CNPJ"
+                    name="cnpj"
+                    value={formData.cnpj}
+                    onChange={handleChange}
+                    variant="outlined"
+                    fullWidth
+                  />
+                  {alertMessage && (
+                    <Alert icon={<CheckIcon fontSize="inherit" />} severity={cnpjValid ? "success" : "error"}>
+                      {alertMessage}
+                    </Alert>
+                  )}
+                </>
               )}
-              <input
-                type="email"
-                placeholder="E-mail"
+              {formType === "cliente" && (
+                <TextField
+                  label="CPF"
+                  name="cpf"
+                  value={formData.cpf}
+                  onChange={handleChange}
+                  variant="outlined"
+                  fullWidth
+                />
+              )}
+              <TextField
+                label="E-mail"
                 name="email"
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
-                style={styles.input}
+                variant="outlined"
+                fullWidth
               />
-              <input
-                type="password"
-                placeholder="Senha"
+              <TextField
+                label="Senha"
                 name="senha"
+                type="password"
                 value={formData.senha}
                 onChange={handleChange}
-                style={styles.input}
+                variant="outlined"
+                fullWidth
               />
-              <div style={styles.btnGroup}>
-                <button style={styles.btnCancel} onClick={handleBack}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                <Button variant="contained" color="error" onClick={() => setFormType(null)}>
                   Voltar
-                </button>
-                <button
-                  style={styles.btnSubmit}
-                  onClick={() => handleSubmit("Atendente")}
-                >
+                </Button>
+                <Button variant="contained" color="primary" onClick={handleSubmit}>
                   Registrar
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Formulário de Cliente */}
-          {view === "cliente" && (
-            <motion.div
-              style={styles.formContainer}
-              variants={containerVariant}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
-              <h2 style={styles.formTitle}>Registro de Cliente</h2>
-              <input
-                type="text"
-                placeholder="Nome Completo"
-                name="nome"
-                value={formData.nome}
-                onChange={handleChange}
-                style={styles.input}
-              />
-              <input
-                type="text"
-                placeholder="CPF"
-                name="cpf"
-                value={formData.cpf}
-                onChange={handleChange}
-                style={styles.input}
-              />
-              <input
-                type="email"
-                placeholder="E-mail"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                style={styles.input}
-              />
-              <input
-                type="password"
-                placeholder="Senha"
-                name="senha"
-                value={formData.senha}
-                onChange={handleChange}
-                style={styles.input}
-              />
-              <div style={styles.btnGroup}>
-                <button style={styles.btnCancel} onClick={handleBack}>
-                  Voltar
-                </button>
-                <button
-                  style={styles.btnSubmit}
-                  onClick={() => handleSubmit("Cliente")}
-                >
-                  Registrar
-                </button>
-              </div>
+                </Button>
+              </Box>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
-  );
-};
+      </Box>
 
-// Estilos CSS em JS
-const styles = {
-  container: {
-    fontFamily: "Arial, sans-serif",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    minHeight: "100vh",
-    backgroundColor: "#f9f9f9",
-  },
-  navbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    backgroundColor: "#fff",
-    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-    padding: "10px 20px",
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-  },
-  logoText: {
-    fontSize: "24px",
-    fontWeight: "bold",
-    color: "#333",
-  },
-  navLinks: {
-    display: "flex",
-    listStyle: "none",
-  },
-  navLink: {
-    color: "#333",
-    textDecoration: "none",
-    marginLeft: "20px",
-    fontSize: "16px",
-  },
-  content: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    marginTop: "120px", // Espaço após a navbar
-    width: "100%",
-  },
-  titleContainer: {
-    textAlign: "center",
-    marginBottom: "40px", // Espaço entre os títulos e os formulários
-  },
-  mainTitle: {
-    fontSize: "36px",
-    fontWeight: "bold",
-    color: "#333",
-  },
-  subtitle: {
-    fontSize: "24px",
-    fontWeight: "normal",
-    color: "red",
-  },
-  formContainer: {
-    width: "80%",
-    maxWidth: "500px",
-    padding: "20px",
-    backgroundColor: "#fff",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-    borderRadius: "8px",
-  },
-  formTitle: {
-    fontSize: "24px",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "15px",
-    borderRadius: "4px",
-    border: "1px solid #ddd",
-    fontSize: "16px",
-  },
-  btnGroup: {
-    display: "flex",
-    justifyContent: "space-between",
-  },
-  btnCancel: {
-    backgroundColor: "#f44336",
-    color: "#fff",
-    padding: "10px 20px",
-    borderRadius: "4px",
-    cursor: "pointer",
-    border: "none",
-    fontSize: "16px",
-  },
-  btnSubmit: {
-    backgroundColor: "#4CAF50",
-    color: "#fff",
-    padding: "10px 20px",
-    borderRadius: "4px",
-    cursor: "pointer",
-    border: "none",
-    fontSize: "16px",
-  },
-  choiceContainer: {
-    textAlign: "center",
-    marginBottom: "40px", 
-  },
-  title: {
-    fontSize: "30px",
-    fontWeight: "bold",
-    marginBottom: "20px",
-  },
-  options: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "20px",
-  },
-  optionBox: {
-    backgroundColor: "#2196F3",
-    color: "#fff",
-    padding: "20px 30px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "18px",
-    fontWeight: "bold",
-    transition: "all 0.3s ease",
-  },
+      {/* Footer */}
+      <Box 
+        component="footer"
+        sx={{ 
+          backgroundColor: "#f1f1f1", 
+          padding: "20px", 
+          textAlign: "left", 
+          width: "100%" 
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: "1216px",
+            margin: "0 auto",
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "20px",
+          }}
+        >
+          {/* Seção de Redes Sociais */}
+          <Box sx={{ flex: "1 1 200px" }}>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              Farmacinha - Saúde & Bem-Estar
+            </Typography>
+            <Box sx={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/facebook.svg" 
+                  alt="Facebook" 
+                  width="30px" 
+                />
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/linkedin.svg" 
+                  alt="LinkedIn" 
+                  width="30px" 
+                />
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/youtube.svg" 
+                  alt="YouTube" 
+                  width="30px" 
+                />
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/instagram.svg" 
+                  alt="Instagram" 
+                  width="30px" 
+                />
+              </a>
+            </Box>
+          </Box>
+
+          {/* Seção de Serviços */}
+          <Box sx={{ flex: "1 1 150px" }}>
+            <Typography variant="h6">Serviços</Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Consultas Online
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Prescrições
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Medicamentos
+              </RouterLink>
+            </Typography>
+          </Box>
+
+          {/* Seção de Ajuda */}
+          <Box sx={{ flex: "1 1 150px" }}>
+            <Typography variant="h6">Ajuda</Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Central de Ajuda
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Fale Conosco
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Dúvidas Frequentes
+              </RouterLink>
+            </Typography>
+          </Box>
+
+          {/* Seção de Empresa */}
+          <Box sx={{ flex: "1 1 150px" }}>
+            <Typography variant="h6">Empresa</Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Sobre Nós
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Carreiras
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink to="#" style={{ textDecoration: "none", color: "#333" }}>
+                Política de Privacidade
+              </RouterLink>
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
 };
 
 export default Cadastro;

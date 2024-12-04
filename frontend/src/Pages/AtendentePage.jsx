@@ -17,7 +17,7 @@ const Atendente = () => {
 
   const handleSearch = async () => {
     if (!medicamento.trim()) {
-      setError("Por favor, digite o nome de um medicamento.");
+      setError("Por favor, digite o que o cliente precisa!");
       return;
     }
 
@@ -29,7 +29,7 @@ const Atendente = () => {
       const genAI = new GoogleGenerativeAI("AIzaSyANWW0Tlbheq1AV37hWDIYJLjJv4GaGt_Y"); // Coloque a chave da API aqui
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-      const prompt = `Conte-me em 20 linhas tudo separadinho em tópicos sobre o bulário do medicamento: ${medicamento}`;
+      const prompt = `Conte-me pra mim atendente da farmácia virtual, o que eu faço se o cliente disser que está asssim: ${medicamento}`;
       const result = await model.generateContent(prompt);
 
       // Certificando-se de que o texto retornado seja válido
@@ -114,13 +114,13 @@ const Atendente = () => {
       </Box>
 
       {/* Barra de Pesquisa */}
-      <Box sx={{ textAlign: "center", marginTop: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+      <Box sx={{ textAlign: "center", marginTop: "20px", maxWidth: "1800px", margin: "0 auto" }}>
         <TextField
-          label="Digite o nome do medicamento"
+          label="Digite o que o cliente está te falando!"
           variant="outlined"
           value={medicamento}
           onChange={(e) => setMedicamento(e.target.value)}
-          sx={{ width: "80%", marginBottom: "20px" }}
+          sx={{ width: "100%", marginBottom: "20px" }}
         />
         <Button
           variant="contained"

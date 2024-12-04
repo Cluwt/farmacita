@@ -12,19 +12,16 @@ from .models import CodigoRedefinicaoSenha, Usuario, Medicamento, Legislacao, Lo
 import requests
 import bcrypt
 import json
-from django.contrib.auth import authenticate
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
-import json
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.authentication import SessionAuthentication
 from django.core.mail import send_mail
+
 
 # Função para verificar se o usuário é administrador
 def is_admin(user):
@@ -425,7 +422,7 @@ def gerar_codigo_redefinicao_senha(request):
     send_mail(
         'Código de Redefinição de Senha',
         f'O seu código de redefinição é: {codigo}',
-        'from@example.com',  # E-mail de origem
+        'csar.cluwt@gmail.com',  # E-mail de origem
         [usuario.email],  # E-mail de destino
         fail_silently=False,
     )

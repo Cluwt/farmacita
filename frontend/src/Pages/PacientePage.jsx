@@ -29,7 +29,7 @@ const PacientePage2 = () => {
       const genAI = new GoogleGenerativeAI("AIzaSyANWW0Tlbheq1AV37hWDIYJLjJv4GaGt_Y"); // Coloque a chave da API aqui
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-      const prompt = `Conte-me em 20 linhas tudo separadinho em tópicos sobre o bulário do medicamento: ${medicamento}`;
+      const prompt = `Me ajude com o que posso comprar na farmácia? ${medicamento}`;
       const result = await model.generateContent(prompt);
 
       // Certificando-se de que o texto retornado seja válido
@@ -52,31 +52,32 @@ const PacientePage2 = () => {
     };
   };
 
-  // Função para formatar a descrição do medicamento em tópicos com negrito
-  const formatDescription = (description) => {
-    const lines = description.split('\n');
-    return lines.map((line, index) => {
-      // Regex para capturar tópicos com o formato **assunto:**, transformando o assunto em negrito
-      const regex = /(\*\*[^:]+:\*\*)(.*)/;
-      const match = line.match(regex);
+ // Função para formatar a resposta do texto
+const formatDescription = (description) => {
+  const lines = description.split("\n");
 
-      if (match) {
-        // Se encontrar um tópico, retorna o assunto em negrito e o conteúdo normal
-        return (
-          <Typography key={index} variant="body1" sx={{ fontSize: "18px", color: "#555", lineHeight: "1.6" }}>
-            <strong>{match[1].replace("**", "").replace("**", "")}</strong> {match[2].trim()}
-          </Typography>
-        );
-      }
+  return lines.map((line, index) => {
+    // Verifica se a linha é um título ou uma linha com asterisco no início e no final
+    const isTitleOrHighlighted = line.startsWith("**") && line.endsWith(":**");
 
-      // Se não for um tópico formatado, apenas exibe a linha
+    if (isTitleOrHighlighted) {
+      // Se for título ou linha com asterisco, coloca em negrito
+      const cleanedLine = line.replace(/\*\*/g, ""); // Remove os asteriscos
       return (
-        <Typography key={index} variant="body1" sx={{ fontSize: "18px", color: "#555", lineHeight: "1.6" }}>
-          {line.trim()}
+        <Typography key={index} variant="h6" sx={{ fontWeight: "bold", marginTop: "20px", color: "#333" }}>
+          {cleanedLine}
         </Typography>
       );
-    });
-  };
+    }
+
+    // Caso contrário, exibe o texto normalmente
+    return (
+      <Typography key={index} variant="body1" sx={{ fontSize: "16px", color: "#555", lineHeight: "1.6", marginTop: "10px" }}>
+        {line}
+      </Typography>
+    );
+  });
+};
 
   return (
     <Box sx={{ fontFamily: "Arial, sans-serif", backgroundColor: "#f9f9f9", minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
@@ -114,13 +115,13 @@ const PacientePage2 = () => {
       </Box>
 
       {/* Barra de Pesquisa */}
-      <Box sx={{ textAlign: "center", marginTop: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+      <Box sx={{ textAlign: "center", marginTop: "20px", maxWidth: "1400px", margin: "0 auto" }}>
         <TextField
-          label="Digite o nome do medicamento"
+          label="Digite o que está sentindo! Iremos ajudar!"
           variant="outlined"
           value={medicamento}
           onChange={(e) => setMedicamento(e.target.value)}
-          sx={{ width: "80%", marginBottom: "20px" }}
+          sx={{ width: "100%", marginBottom: "20px" }}
         />
         <Button
           variant="contained"

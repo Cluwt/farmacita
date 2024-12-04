@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from 'react-router-dom';  // Importar Link do React Router
+import { Link as RouterLink } from 'react-router-dom';  // Importar Link do React Router
+import { Typography, Box, Button, TextField, AppBar, Toolbar, CircularProgress, Grid } from '@mui/material'; // Importando componentes do MUI
 
 const Login = () => {
   const [formType, setFormType] = useState(null); // Estado para alternar entre Cliente e Atendente
@@ -52,144 +53,317 @@ const Login = () => {
       exit={{ y: 250, opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h3 style={styles.formTitle}>
+      <Typography variant="h5" sx={styles.formTitle}>
         Login como {formType === "cliente" ? "Cliente" : "Atendente"}
-      </h3>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <input
+      </Typography>
+      {error && <Typography sx={{ color: 'red' }}>{error}</Typography>}
+      <TextField
         type="text"
         placeholder={formType === "cliente" ? "CPF" : "Email"}
         value={formType === "cliente" ? cpf : email}
         onChange={(e) => formType === "cliente" ? setCpf(e.target.value) : setEmail(e.target.value)}
-        style={styles.input}
+        variant="outlined"
+        fullWidth
+        sx={styles.input}
       />
-      <input
+      <TextField
         type="password"
         placeholder="Senha"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        style={styles.input}
+        variant="outlined"
+        fullWidth
+        sx={styles.input}
       />
-      <button
-        style={{ ...styles.button, ...styles.btnEntrar }}
+      <Button
+        variant="contained"
+        sx={{ ...styles.button, ...styles.btnEntrar }}
         onClick={handleLogin}
       >
         ENTRAR
-      </button>
-      <button
-        style={{ ...styles.button, ...styles.btnCancelar }}
+      </Button>
+      <Button
+        variant="contained"
+        sx={{ ...styles.button, ...styles.btnCancelar }}
         onClick={() => setFormType(null)}
       >
         VOLTAR
-      </button>
-      <Link to="/redefinir" style={styles.link}>
-        Redefinir senha
-    </Link>
+      </Button>
+      <RouterLink to="/redefinir" style={styles.link}>
+        Redefinir senha (SEM FUNCIONAMENTO)
+      </RouterLink>
     </motion.div>
   );
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>Farmacinha</h1>
-        <h2 style={styles.subtitle}>Saúde & Bem-Estar</h2>
-      </header>
-
-      <AnimatePresence>
-        {!formType ? (
-          <motion.div
-            style={styles.choiceContainer}
-            initial={{ y: 250, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 250, opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h1 style={styles.title}>Você quer logar como?</h1>
-            <div style={styles.options}>
-              <motion.div
-                style={styles.optionBox}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setFormType("cliente")}
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        backgroundColor: '#fff',
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      {/* Barra de navegação */}
+      <AppBar position="fixed" sx={{ backgroundColor: "#fff", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)", zIndex: 1000 }}>
+        <Toolbar sx={{ display: "flex", alignItems: "center", padding: "0 20px" }}>
+          {/* Container Flex para Alinhar Título e Links */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: "30px" }}>
+            <Typography variant="h6" sx={{ color: "#333", fontWeight: "bold", whiteSpace: 'pre-line' }}>
+              Saúde &{'\n'}Bem-Estar
+            </Typography>
+            {/* Links da Navbar */}
+            <Box sx={{ display: "flex", gap: "20px", alignItems: "center" }}>
+              <RouterLink 
+                to="/duvidas" 
+                style={{ 
+                  textDecoration: "underline", 
+                  color: "#333", 
+                  fontSize: "16px", 
+                  textUnderlineOffset: "5px", 
+                  transition: "all 0.3s ease" 
+                }}
               >
-                Cliente
-              </motion.div>
-              <motion.div
-                style={styles.optionBox}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setFormType("atendente")}
+                Dúvidas
+              </RouterLink>
+              <RouterLink 
+                to="/legislacao" 
+                style={{ 
+                  textDecoration: "underline", 
+                  color: "#333", 
+                  fontSize: "16px", 
+                  textUnderlineOffset: "5px", 
+                  transition: "all 0.3s ease" 
+                }}
               >
-                Atendente
-              </motion.div>
-            </div>
-          </motion.div>
-        ) : (
-          renderForm()
-        )}
-      </AnimatePresence>
+                Legislação
+              </RouterLink>
+            </Box>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-      {/* Footer com links e ícones */}
-      <footer style={styles.footer}>
-        <div style={styles.footerLinks}>
-          <div>
-            <a href="#" style={styles.footerLink}>
-              Site Name
-            </a>
-          </div>
-          <div>
-            <a href="#" style={styles.footerLink}>
-              Topic
-            </a>
-            <a href="#" style={styles.footerLink}>
-              Page
-            </a>
-            <a href="#" style={styles.footerLink}>
-              Page
-            </a>
-          </div>
-        </div>
-        <div style={styles.socialIcons}>
-          <i className="fab fa-facebook" style={styles.icon}></i>
-          <i className="fab fa-linkedin" style={styles.icon}></i>
-          <i className="fab fa-youtube" style={styles.icon}></i>
-          <i className="fab fa-instagram" style={styles.icon}></i>
-        </div>
-      </footer>
-    </div>
+      {/* Conteúdo Principal */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          paddingTop: "80px", // Espaço para o AppBar fixo
+          paddingBottom: "40px", // Espaço antes do footer
+          maxWidth: "1200px",
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        {/* Header */}
+        <Box sx={{ textAlign: "center", marginBottom: "50px", marginTop:"0px" }}>
+          <Typography variant="h1" sx={{ fontSize: "36px", fontWeight: "bold", color: "#000" }}>
+            Farmacinha
+          </Typography>
+          <Typography variant="h2" sx={{ fontSize: "22px", color: "#d81b1b", textDecoration: "underline", whiteSpace: 'pre-line' }}>
+            Saúde & Bem-Estar
+          </Typography>
+        </Box>
+
+        {/* Escolha de Tipo de Login */}
+        <AnimatePresence>
+          {!formType ? (
+            <motion.div
+              style={styles.choiceContainer}
+              initial={{ y: 250, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 250, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Typography variant="h4" sx={styles.title}>Você quer logar como?</Typography>
+              <Box sx={styles.options}>
+                <motion.div
+                  style={styles.optionBox}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setFormType("cliente")}
+                >
+                  Cliente
+                </motion.div>
+                <motion.div
+                  style={styles.optionBox}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setFormType("atendente")}
+                >
+                  Atendente
+                </motion.div>
+              </Box>
+            </motion.div>
+          ) : (
+            renderForm()
+          )}
+        </AnimatePresence>
+      </Box>
+
+      {/* Footer */}
+      <Box 
+        component="footer"
+        sx={{ 
+          backgroundColor: "#f1f1f1", 
+          padding: "20px", 
+          textAlign: "left", 
+          width: "100%" 
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: "1216px",
+            margin: "0 auto",
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "20px",
+          }}
+        >
+          {/* Seção de Redes Sociais */}
+          <Box sx={{ flex: "1 1 200px" }}>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              Farmacinha - Saúde & Bem-Estar
+            </Typography>
+            <Box sx={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/facebook.svg" 
+                  alt="Facebook" 
+                  width="30px" 
+                />
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/linkedin.svg" 
+                  alt="LinkedIn" 
+                  width="30px" 
+                />
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/youtube.svg" 
+                  alt="YouTube" 
+                  width="30px" 
+                />
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/svgs/brands/instagram.svg" 
+                  alt="Instagram" 
+                  width="30px" 
+                />
+              </a>
+            </Box>
+          </Box>
+
+          {/* Seção de Serviços */}
+          <Box sx={{ flex: "1 1 150px" }}>
+            <Typography variant="h6">Serviços</Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Consultas Online
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Prescrições
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Medicamentos
+              </RouterLink>
+            </Typography>
+          </Box>
+
+          {/* Seção de Ajuda */}
+          <Box sx={{ flex: "1 1 150px" }}>
+            <Typography variant="h6">Ajuda</Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Central de Ajuda
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Fale Conosco
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Dúvidas Frequentes
+              </RouterLink>
+            </Typography>
+          </Box>
+
+          {/* Seção de Empresa */}
+          <Box sx={{ flex: "1 1 150px" }}>
+            <Typography variant="h6">Empresa</Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Sobre Nós
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Carreiras
+              </RouterLink>
+            </Typography>
+            <Typography>
+              <RouterLink 
+                to="#" 
+                style={{ textDecoration: "none", color: "#333" }}
+              >
+                Política de Privacidade
+              </RouterLink>
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
+
 const styles = {
-  container: {
-    margin: 0,
-    fontFamily: "Arial, sans-serif",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-between",
-    minHeight: "100vh",
-    backgroundColor: "#fff",
-  },
-  header: {
-    textAlign: "center",
-    marginTop: "50px",
-  },
-  title: {
-    fontSize: "36px",
-    fontWeight: "bold",
-    color: "#000",
-  },
-  subtitle: {
-    fontSize: "22px",
-    color: "#d81b1b",
-    textDecoration: "underline",
-  },
   choiceContainer: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     gap: "30px",
     marginTop: "30px",
+  },
+  title: {
+    fontSize: "32px",
+    color: "#333",
+    fontWeight: "bold",
   },
   options: {
     display: "flex",
@@ -213,7 +387,8 @@ const styles = {
     padding: "40px",
     borderRadius: "10px",
     boxShadow: "0 4px 19px rgba(0, 0, 0, 0.1)",
-    width: "450px",
+    width: "100%",
+    maxWidth: "450px",
     textAlign: "center",
     display: "flex",
     flexDirection: "column",
@@ -255,15 +430,15 @@ const styles = {
     textDecoration: "none",
   },
   footer: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#f1f1f1",
     width: "100%",
     padding: "20px 0",
-    textAlign: "center",
+    textAlign: "left",
     borderTop: "1px solid #ddd",
   },
   footerLinks: {
     display: "flex",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: "50px",
   },
   footerLink: {
